@@ -30,4 +30,12 @@
     };
 
     chrome.extension.onMessage.addListener(captureMessageListener);
+
+    chrome.runtime.onInstalled.addListener(function (details) {
+        chrome.storage.sync.get("hotkey", function (items) {
+            if (!(items && items.hotkey)) {
+                chrome.storage.sync.set({ "hotkey": { which: 67, shift: false, ctrl: true, alt: true, meta: false } });
+            }
+        });
+    });
 }());

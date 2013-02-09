@@ -10,7 +10,7 @@
         "128": "images/icon128.png"
     },
 
-    "permissions": ["http://www.pathofexile.com/", "https://www.pathofexile.com/", "tabs"],
+    "permissions": ["tabs", "storage", "http://www.pathofexile.com/", "https://www.pathofexile.com/"],
     "content_scripts": [
         {
             "matches": ["http://www.pathofexile.com/*", "https://www.pathofexile.com/*"],
@@ -20,5 +20,6 @@
     "background": {
         "scripts": ["eventPage.js"],
         "persistent": false
-    }
+    },
+    "options_page": "options.html"
 }

@@ -1,58 +1,78 @@
 (function ($) {
     "use strict";
 
-    $(window).on("keyup", function (e) {
-        var ItemPopupCapture, c;
+    var hotkey;
 
-        ItemPopupCapture = (function () {
-            function klass() {
+    var ItemPopupCapture = (function () {
+        function klass() {
+        }
+
+        klass.prototype.capture = function () {
+            var $popup, rect;
+
+            $popup = this.findTargetPopup();
+            if ($popup.length === 0) {
+                return;
             }
 
-            klass.prototype.capture = function () {
-                var $popup, rect;
+            rect = this.calcPopupRect($popup);
 
-                $popup = this.findTargetPopup();
-                if ($popup.length === 0) {
-                    return;
-                }
+            $popup.css('background', '#000');
+            window.setTimeout(function () {
+                chrome.extension.sendMessage({ popupRect: rect }, function (response) {
+                    window.open(response.popupImageUrl);
+                    $popup.css('background', '');
+                });
+            }, 1000);
+        };
 
-                rect = this.calcPopupRect($popup);
+        klass.prototype.findTargetPopup = function () {
+            return $("#poe-popup-container div.itemPopupContainer").filter(":visible").not(".gemPopup").first();
+        };
 
-                $popup.css('background', '#000');
-                window.setTimeout(function () {
-                    chrome.extension.sendMessage({ popupRect: rect }, function (response) {
-                        window.open(response.popupImageUrl);
-                        $popup.css('background', '');
-                    });
-                }, 1000);
+        klass.prototype.calcPopupRect = function ($popup) {
+            var scrollLeft = $(document).scrollLeft(),
+                scrollTop = $(document).scrollTop(),
+                containerPos = $("#poe-popup-container").position(),
+                popupPos = $popup.position(),
+                popupMarginLeft = parseFloat($popup.css("margin-left")),
+                popupRect;
+
+            popupRect = {
+                left: containerPos.left + popupPos.left + popupMarginLeft - scrollLeft,
+                top: containerPos.top + popupPos.top - scrollTop,
+                width: $popup.outerWidth(),
+                height: $popup.outerHeight()
             };
 
-            klass.prototype.findTargetPopup = function () {
-                return $("#poe-popup-container div.itemPopupContainer").filter(":visible").not(".gemPopup").first();
-            };
+            return popupRect;
+        };
 
-            klass.prototype.calcPopupRect = function ($popup) {
-                var scrollLeft = $(document).scrollLeft(),
-                    scrollTop = $(document).scrollTop(),
-                    containerPos = $("#poe-popup-container").position(),
-                    popupPos = $popup.position(),
-                    popupMarginLeft = parseFloat($popup.css("margin-left")),
-                    popupRect;
+        return klass;
+    }());
 
-                popupRect = {
-                    left: containerPos.left + popupPos.left + popupMarginLeft - scrollLeft,
-                    top: containerPos.top + popupPos.top - scrollTop,
-                    width: $popup.outerWidth(),
-                    height: $popup.outerHeight()
-                };
+    chrome.storage.sync.get("hotkey", function (items) {
+        if (chrome.runtime.lastError) { return; }
 
-                return popupRect;
-            };
+        hotkey = items.hotkey;
+    });
 
-            return klass;
-        }());
+    chrome.storage.onChanged.addListener(function (changes, namespace) {
+        if (changes.hotkey && namespace === 'sync') {
+            hotkey = changes.hotkey.newValue;
+        }
+    });
 
-        if (e.which === 67 && e.altKey && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+    $(window).on("keyup", function (e) {
+        var c;
+
+        if (hotkey &&
+            e.which === hotkey.which &&
+            !!e.shiftKey === hotkey.shift &&
+            !!e.ctrlKey === hotkey.ctrl &&
+            !!e.altKey === hotkey.alt &&
+            !!e.metaKey === hotkey.meta) {
+
             c = new ItemPopupCapture();
             c.capture();
         }
