@@ -1,0 +1,22 @@
+{
+    "manifest_version": 2,
+
+    "name": "Poesuna",
+    "description": "Take a snapshot from PoE.",
+    "version": "1.0.0",
+
+    "permissions": [
+        "*://www.pathofexile.com/",
+        "tabs"
+    ],
+    "content_scripts": [
+        {
+            "matches": ["*://www.pathofexile.com/*"],
+            "js": ["lib/jquery.min.js", "content.js"]
+        }
+    ],
+    "background": {
+        "scripts": ["eventPage.js"],
+        "persistent": false
+    }
+}
