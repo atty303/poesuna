@@ -1,17 +1,19 @@
 {
+    "name": "PoEsuna",
+    "version": "1.0.0",
     "manifest_version": 2,
 
-    "name": "Poesuna",
-    "description": "Take a snapshot from PoE.",
-    "version": "1.0.0",
+    "description": "Take a screen shot from the web site for Path of Exile.",
+    "icons": {
+        "16": "images/icon16.png",
+        "48": "images/icon48.png",
+        "128": "images/icon128.png"
+    },
 
-    "permissions": [
-        "*://www.pathofexile.com/",
-        "tabs"
-    ],
+    "permissions": ["http://www.pathofexile.com/", "https://www.pathofexile.com/", "tabs"],
     "content_scripts": [
         {
-            "matches": ["*://www.pathofexile.com/*"],
+            "matches": ["http://www.pathofexile.com/*", "https://www.pathofexile.com/*"],
             "js": ["lib/jquery.min.js", "content.js"]
         }
     ],
