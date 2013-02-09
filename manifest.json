@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "manifest_version": 2,
 
-    "description": "Take a screen shot from the web site for Path of Exile.",
+    "description": "Take a screenshot of item description from the website of Path of Exile.",
     "icons": {
         "16": "images/icon16.png",
         "48": "images/icon48.png",
