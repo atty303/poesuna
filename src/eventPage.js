@@ -21,6 +21,7 @@
     };
 
     var captureMessageListener = function (request, sender, sendResponse) {
+        _gaq.push(['_trackEvent', 'screenshot', 'took']);
         chrome.tabs.captureVisibleTab(null, {format: "png"}, function (imageUrl) {
             trimPopupImage(imageUrl, request.popupRect, function (popupImageUrl) {
                 sendResponse({ popupImageUrl: popupImageUrl });

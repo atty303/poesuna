@@ -11,6 +11,8 @@
     },
 
     "permissions": ["tabs", "storage", "http://www.pathofexile.com/", "https://www.pathofexile.com/"],
+    "content_security_policy": "script-src 'self' https://ssl.google-analytics.com; object-src 'self'",
+
     "content_scripts": [
         {
             "matches": ["http://www.pathofexile.com/*", "https://www.pathofexile.com/*"],
@@ -18,7 +20,7 @@
         }
     ],
     "background": {
-        "scripts": ["eventPage.js"],
+        "scripts": ["ga.js", "eventPage.js"],
         "persistent": false
     },
     "options_page": "options.html"
