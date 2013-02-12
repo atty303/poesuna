@@ -8,7 +8,7 @@
         }
 
         klass.prototype.capture = function (opts) {
-            var $popup, rect;
+            var self = this, $popup, rect;
 
             $popup = this.findTargetPopup(opts.target);
             if ($popup.length === 0) {
@@ -17,14 +17,80 @@
 
             rect = this.calcPopupRect($popup);
 
-            $popup.css('background', '#000');
+            this.preparePageBeforeCapture($popup);
 
+            // ページのスタイルを変更した後、少し待ってからキャプチャを開始する。
+            // ウェイトが無い(タイムアウトを 0 に設定、または setTimeout しない)と、スタイル変更前の状態がキャプチャされることがある。
+            // ウェイト無しで確実にキャプチャできる方法があれば取り入れたい。
             window.setTimeout(function () {
                 chrome.extension.sendMessage({ popupRect: rect }, function (response) {
+                    self.cleanupPageAfterCapture($popup);
+
                     window.open(response.popupImageUrl);
-                    $popup.css('background', '');
                 });
             }, 100);
+        };
+
+        klass.prototype.blockPopupActivityHandler = function (e) {
+            e.stopPropagation();
+        };
+
+        /*
+         * キャプチャの前に必要なページに対する準備を行う。
+         *
+         * - ポップアップの背景が半透明になっており、そのままキャプチャするとインベントリが透けて不恰好なので、背景を不透明の黒に変更する。
+         * - ページ内要素全ての mouseover/mouseout イベントを無効化する。
+         *   これにより、キャプチャ開始待ちの間にカーソルが動かされることで、キャプチャ対象のポップアップが閉じてしまうことを防ぐ。
+         */
+        klass.prototype.preparePageBeforeCapture = function ($popup) {
+            $popup.css('background', '#000');
+
+            // これはイベントをキャプチャしているためか、ページコンテキストで実行しなくとも、ページ側のイベントハンドラの実行を防げる。
+            document.addEventListener('mouseover', this.blockPopupActivityHandler, true);
+            document.addEventListener('mouseout', this.blockPopupActivityHandler, true);
+        };
+
+        /*
+         * キャプチャの後に必要なページに対する後始末を行う。
+         *
+         * - preparePageBeforeCapture で行った変更を元に戻す。
+         * - キャプチャ開始待ちの間にカーソルをアイテム外へ動かした場合、キャプチャ完了後にもポップアップが表示されたままになっているが、
+         *   そのまま別のアイテムにカーソルを合わせると、ポップアップが多重表示されて不恰好なことになるため、
+         *   キャプチャ完了時点で開いていたポップアップは全て閉じる。
+         *   カーソルをアイテムに載せたままでもポップアップが閉じてしまうが、キャプチャ完了時には別タブが開いて現ページは見えなくなり、
+         *   別タブから現ページに表示を切り替える頃にはカーソルは移動しているであろうから、違和感はない。
+         */
+        klass.prototype.cleanupPageAfterCapture = function ($popup) {
+            $popup.css('background', '');
+
+            document.removeEventListener('mouseover', this.blockPopupActivityHandler, true);
+            document.removeEventListener('mouseout', this.blockPopupActivityHandler, true);
+
+            this.closeActivePopups();
+        };
+
+        /*
+         * 全てのポップアップを閉じる。
+         *
+         * 全てのアイテム要素の mouseout イベントを発生させることで、アイテムからカーソルを外すことでポップアップが閉じる動作をシミュレートする。
+         * Content Script の実行コンテキストでイベントを trigger してもページ由来のイベントハンドラは実行されないことに注意する。
+         * また、ページに jQuery がロードされていることを前提としている。
+         */
+        klass.prototype.closeActivePopups = function () {
+            this.runScriptInPageContext(["jQuery('div.newItemContainer').add('div.socketed').trigger('mouseout');"]);
+        };
+
+        /*
+         * JSコードをページ本来のJS環境で実行する。
+         *
+         * http://stackoverflow.com/questions/9515704/building-a-chrome-extension-inject-code-in-a-page-using-a-content-script
+         */
+        klass.prototype.runScriptInPageContext = function (lines) {
+            var actualCode = lines.join('\n'),
+                script = document.createElement('script');
+            script.textContent = actualCode;
+            (document.head || document.documentElement).appendChild(script);
+            script.parentNode.removeChild(script);
         };
 
         klass.prototype.findTargetPopup = function (target) {
