@@ -64,6 +64,11 @@
         }
     });
 
+    $(document).on('dblclick', '#inventory-manager div.newItemContainer', function (e) {
+        var c = new ItemPopupCapture();
+        c.capture();
+    });
+
     $(window).on("keyup", function (e) {
         var c;
 
