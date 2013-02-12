@@ -7,10 +7,10 @@
         function klass() {
         }
 
-        klass.prototype.capture = function () {
+        klass.prototype.capture = function (opts) {
             var $popup, rect;
 
-            $popup = this.findTargetPopup();
+            $popup = this.findTargetPopup(opts.target);
             if ($popup.length === 0) {
                 return;
             }
@@ -27,8 +27,16 @@
             }, 100);
         };
 
-        klass.prototype.findTargetPopup = function () {
-            return $("#poe-popup-container div.itemPopupContainer").filter(":visible").not(".gemPopup").first();
+        klass.prototype.findTargetPopup = function (target) {
+            // #poe-popup-container にはページのライフタイムにおいて生成された全てのポップアップが含まれているが、
+            // visible なポップアップは高々1つ〜2つしかない。
+            var $visiblePopups = $("#poe-popup-container div.itemPopupContainer").filter(":visible");
+            // ソケットされているジェムにカーソルを当てたとき、アイテムとジェム両方のポップアップが表示されるので、
+            // どちらか片方のポップアップのみを対象とする。
+            if ($visiblePopups.length > 1) {
+                return ((target === 'gem') ? $visiblePopups.filter('.gemPopup') : $visiblePopups.not('.gemPopup')).first();
+            }
+            return $visiblePopups.first();
         };
 
         klass.prototype.calcPopupRect = function ($popup) {
@@ -64,10 +72,18 @@
         }
     });
 
-    $(document).on('dblclick', '#inventory-manager div.newItemContainer', function (e) {
+    $(document).on('dblclick', 'div.newItemContainer', function (e) {
         var c = new ItemPopupCapture();
-        c.capture();
+        c.capture({ target: 'item' });
     });
+
+/*
+    $(document).on('dblclick', 'div.newItemContainer div.socketed', function (e) {
+        var c = new ItemPopupCapture();
+        c.capture({ target: 'gem' });
+        e.stopPropagation();
+    });
+*/
 
     $(window).on("keyup", function (e) {
         var c;
@@ -80,7 +96,7 @@
             !!e.metaKey === hotkey.meta) {
 
             c = new ItemPopupCapture();
-            c.capture();
+            c.capture({ target: 'item' });
         }
     });
 }(jQuery));
