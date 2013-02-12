@@ -1,6 +1,6 @@
 {
     "name": "PoEsuna",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "manifest_version": 2,
 
     "description": "Take a screenshot of item description from the website of Path of Exile.",
