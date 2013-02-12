@@ -18,12 +18,13 @@
             rect = this.calcPopupRect($popup);
 
             $popup.css('background', '#000');
+
             window.setTimeout(function () {
                 chrome.extension.sendMessage({ popupRect: rect }, function (response) {
                     window.open(response.popupImageUrl);
                     $popup.css('background', '');
                 });
-            }, 1000);
+            }, 100);
         };
 
         klass.prototype.findTargetPopup = function () {
